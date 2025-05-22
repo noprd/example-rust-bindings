@@ -1,0 +1,7 @@
+[env]
+CC = "zig cc"
+CXX = "zig c++"
+PYO3_PYTHON = "python3"
+
+# [target.'cfg(all())']
+# linker = "zig cc"
