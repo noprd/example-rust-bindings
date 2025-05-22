@@ -134,7 +134,7 @@ build-requirements-dependencies:
         --requirements pyproject.toml
     @{{PYVENV_ON}} && {{PYVENV}} -m uv sync
 
-build-compile module="MODULE_NAME":
+build-compile module="${MODULE_NAME}":
     @cargo zigbuild --target-dir "target" --release --lib
     @# cargo zigbuild --target-dir "target" --release --bin "{{module}}"
 
@@ -286,6 +286,7 @@ check-system:
 
 check-system-requirements:
     @just _check-tool "cargo" "cargo"
-    @just _check-tool "cargo fmt" "cargo fmt"
+    @# FIXME
+    @# just _check-tool "cargo fmt" "cargo fmt"
     @just _check-tool "cargo-zigbuild" "cargo-zigbuild"
     @just _check-python-tool "{{RUST_TO_PY_BINDINGS}}" "{{RUST_TO_PY_BINDINGS}}"
