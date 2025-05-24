@@ -65,26 +65,6 @@ jobs:
         with:
           python-version: "${{ env.PYTHON_VERSION }}"
 
-      - name: Setup - ping basic tools and perform pre-installation
-        shell: bash
-        run: |-
-          just --version
-          zig version
-          which zig
-          which zig cc
-          which zig c++
-          zig cc --version
-          zig c++ --version
-          which cc
-          which c++
-          cc --version
-          c++ --version
-          rustup --version
-          rustc --version
-          cargo --version
-          python3 --version
-          python3 -m pip install --upgrade pip wheel
-
       - name: STEP 1 - build code
         shell: bash
         run: |-
