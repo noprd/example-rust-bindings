@@ -102,17 +102,19 @@ _rust_path_to_test_module path:
 setup:
     @echo "TASK: SETUP"
     @- cp -n "templates/template.env" ".env"
+    @rustup toolchain install nightly
+    @rustup update
     @rustup override set nightly
 
 build:
+    @echo "TASK: BUILD"
     @- just build-venv
     @just build-requirements
     @just check-system-requirements
     @just build-compile
-    @just build-bindings
 
 build-venv:
-    @echo "create venv if not exists"
+    @echo "SUBTASK: create venv if not exists"
     @${PYTHON_PATH} -m venv .venv 2> /dev/null
 
 build-requirements:
@@ -120,12 +122,14 @@ build-requirements:
     @just build-requirements-dependencies
 
 build-requirements-basic:
+    @echo "SUBTASK: build basic dependencies"
     @# cargo update --verbose --offline
     @# cargo install --locked cargo-zigbuild
     @{{PYVENV_ON}} && {{PYVENV}} -m pip install --upgrade pip
     @{{PYVENV_ON}} && {{PYVENV}} -m pip install ruff uv
 
 build-requirements-dependencies:
+    @echo "SUBTASK: build dependencies"
     @{{PYVENV_ON}} && {{PYVENV}} -m uv pip install \
         --exact \
         --strict \
@@ -135,11 +139,12 @@ build-requirements-dependencies:
     @{{PYVENV_ON}} && {{PYVENV}} -m uv sync
 
 build-compile module="${MODULE_NAME}":
+    @echo "SUBTASK: compile"
     @cargo zigbuild --target-dir "target" --release --lib
     @# cargo zigbuild --target-dir "target" --release --bin "{{module}}"
 
 build-bindings:
-    @echo "SUBTASK: build compiled bindings."
+    @echo "TASK: build bindings for python"
     @{{PYVENV_ON}} && {{PYVENV}} -m {{RUST_TO_PY_BINDINGS}} develop \
         --offline \
         --bindings pyo3 \
