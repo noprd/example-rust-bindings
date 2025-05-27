@@ -1,0 +1,123 @@
+name: QA [+ CD] (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker-image:
+        description: Choice of docker image on which to run action.
+        default: ubuntu-latest
+        type: choice
+        options:
+          - ubuntu-latest
+
+      environment:
+        description: 'Choice of environment for pipeline'
+        # NOTE: this option provides dropdown list of choices of environments set on GitHub (enterprise only)
+        type: environment
+        required: true
+
+      deploy:
+        description: 'Deploy code?'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "${{ vars.PYTHON_VERSION }}"
+
+jobs:
+  qa:
+    name: QA
+    runs-on: ${{ github.event.inputs.docker-image }}
+    environment: "${{ github.event.inputs.environment }}"
+    env:
+      ARCHITECTURE: "${{ vars.ARCHITECTURE }}"
+      PYTHON_PATH: "${{ vars.PYTHON_PATH }}"
+      MODULE_NAME: "${{ vars.MODULE_NAME }}"
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Action - install justfile tool
+        uses: extractions/setup-just@v3
+        with:
+          just-version: "1.25.2"
+
+      - name: Action - install zig
+        uses: goto-bus-stop/setup-zig@v2.2.1
+        with:
+          version: "0.12.0"
+
+      # - name: Action - install rust
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1.12.0
+
+      - name: Action - install rust and set to stable
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          target: "${{ env.ARCHITECTURE }}"
+          toolchain: stable
+          override: true
+
+      - name: Action - install Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+
+      # - name: SETUP - install python venv
+      #   shell: bash
+      #   run: |-
+      #     just build-venv
+      #
+      # - name: Action install maturin
+      #   uses: PyO3/maturin-action@v1.49.1
+      #   with:
+      #     command: develop
+      #     args: --release --bindings pyo3 --ignore-rust-version
+      #     # sccache: 'true'
+      #     manylinux: "auto"
+      #     # manylinux: "musllinux"
+      #     # target: "${{ env.ARCHITECTURE }}"
+      #     rust-toolchain: stable
+
+      - name: STEP 1 - build code
+        shell: bash
+        run: |-
+          just setup
+
+          touch .env && rm .env
+          echo "
+          MODULE_NAME="${{ vars.MODULE_NAME }}"
+          PYTHON_PATH="python${{ env.PYTHON_VERSION }}"
+          ARCHITECTURE="${{ env.ARCHITECTURE }}"
+          RUST_BACKTRACE=full
+          " > .env
+
+          just build
+
+      - name:  STEP 2 - check linting
+        shell: bash
+        run: |-
+          just prettify
+
+      - name:  STEP 3 - run unit tests
+        shell: bash
+        run: |-
+          just tests-unit
+
+  # only performed if qa passes and option set
+  deploy:
+    name: DEPLOY
+    needs: 'qa'
+    # job only runs if deploy-checkbox is selected
+    if: ${{ github.event.inputs.deploy == 'true' }}
+    runs-on: ${{ github.event.inputs.docker-image }}
+    environment: "${{ github.event.inputs.environment }}"
+    env: {}
+
+    steps:
+      - name: Message
+        shell: bash
+        run: |-
+          echo "::warning::Not yet implemented"
