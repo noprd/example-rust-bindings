@@ -1,10 +1,8 @@
-cargo-features = ["profile-rustflags"]
-
 [package]
 name = "example_package"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.87"
 authors = [
     "noprd <noprd@users.noreply.github.com>",
 ]
@@ -19,51 +17,30 @@ members = [
     ".",
 ]
 
-# [env]
-# NOTE: has no effect
-# PYO3_PYTHON = { value = "python3" }
-# CC = "zig cc"
-# CXX = "zig c++"
-
 [profile.release]
-rustflags = [
-    "-A", "unused_imports",
-    "-A", "dead_code",
-    "-C", "link-arg=-undefined",
-    "-C", "link-arg=dynamic_lookup",
-]
-debug = true
+debug = false
 strip = false
 
 [profile.dev]
-rustflags = [
-    "-A", "unused_imports",
-    "-A", "dead_code",
-    "-C", "link-arg=-undefined",
-    "-C", "link-arg=dynamic_lookup",
-]
+debug = true
+strip = false
 
 [profile.test]
-rustflags = [
-    "-A", "unused_imports",
-    "-A", "dead_code",
-    "-C", "link-arg=-undefined",
-    "-C", "link-arg=dynamic_lookup",
-]
+debug = true
+strip = false
 
 [dependencies]
-pyo3 = {version = "^0.25.0", features = ["extension-module", "abi3-py311"]}
+cargo-zigbuild = {version = "^0.20.0"}
+pyo3 = {version = "^0.25.0", features = ["extension-module", "abi3"]}
 serde = {version = "^1.0.219", features = ["derive"]}
 serde_json = {version = "^1.0.140"}
 dict_derive = {version = "^0.6.0" }
 dedent = {version = "^0.1.1"}
 
 [dev-dependencies]
-cargo-zigbuild = {version = "^0.20.0"}
 rstest = {version = "^0.25.0"}
-rustfmt = {version = "^0.10.0"}
-# FIXME: these require blake3, which fail to build on unix
-# blake3 = {version = "^1.8.2", default-features = false}
+# NOTE: causes issues with dependency extrpim
+# rustfmt = {version = "^0.10.0"}
 
 # NOTE: currently unused
 # [[bin]]

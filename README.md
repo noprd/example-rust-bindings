@@ -1,4 +1,4 @@
-[![Rust nightly](https://img.shields.io/badge/Rust-Nightly-informational?logo=rust)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust%20version-1.87-black)](https://www.rust-lang.org)
 
 [![qa manual:main](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml/badge.svg?branch=main)](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml)
 [![qa manual:staging](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml/badge.svg?branch=staging)](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml)
@@ -30,7 +30,7 @@ and develop a few simple pure rust structs/traits to handle tree structures.
 
 ## System Requirements ##
 
-- [rust](https://www.rust-lang.org) (currently uses `v1.88`, nightly) incl. cargo
+- [rust](https://www.rust-lang.org) (currently uses `v1.87`) incl. cargo
 - [python3](https://www.python.org) (development was performed primarily with `v3.13`, but this should work with all versions after `v3.10`)
 - [bash](https://gitforwindows.org)
 - the [justfile](https://github.com/casey/just?tab=readme-ov-file#installation) tool
