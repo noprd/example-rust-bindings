@@ -1,6 +1,6 @@
 [project]
 name = "example-package"
-version = "0.2.0-beta1"
+version = "0.2.0"
 description = 'Example of rust bindings for python'
 authors = [
   {name="noprd", email='noprd@users.noreply.github.com'},

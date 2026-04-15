@@ -406,7 +406,7 @@ dependencies = [
 
 [[package]]
 name = "example-package"
-version = "0.2.0-beta1"
+version = "0.2.0"
 dependencies = [
  "cargo-zigbuild",
  "dedent",
