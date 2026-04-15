@@ -1,4 +1,6 @@
-[![Rust](https://img.shields.io/badge/rust%20version-1.87-black)](https://www.rust-lang.org)
+[![Rust v1.94](https://img.shields.io/badge/rust%20v1.94-black)](https://www.rust-lang.org)
+[![Python v3.14](https://img.shields.io/badge/python%20v3.14-1464b4.svg)](https://www.python.org)
+[![Zig v0.15](https://img.shields.io/badge/zig%20v0.15-gold)](https://ziglang.org)
 
 [![qa manual:main](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml/badge.svg?branch=main)](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml)
 [![qa manual:staging](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml/badge.svg?branch=staging)](https://github.com/noprd/example-rust-bindings/actions/workflows/manual.yaml)
@@ -24,16 +26,41 @@ In the case of Rust, [maturin](https://www.maturin.rs) can be utilised for this 
 In this repository, we provide an example of this.
 The python package created is written in Rust and provides a few simple classes
 for recursive structures that occur in BIM models known as Psets.
-To achieve this, we use [PyO3](https://pyo3.rs) (currently `v0.25`),
+To achieve this, we use [PyO3](https://pyo3.rs),
 rely on rust's serde package to parse arbitrary JSON-like objects,
 and develop a few simple pure rust structs/traits to handle tree structures.
 
+Moreover, we demonstrate the generation of prebuilt python artefacts ("wheels"),
+as well as a (albeit suboptimal) way to install the pre-built wheels
+in [demo/python](demo/python) from possibly private repositories on GitHub.
+
 ## System Requirements ##
 
-- [rust](https://www.rust-lang.org) (currently uses `v1.87`) incl. cargo
-- [python3](https://www.python.org) (development was performed primarily with `v3.13`, but this should work with all versions after `v3.10`)
+- [rust](https://www.rust-lang.org) (currently uses `v1.94`) incl. cargo
+- [python3](https://www.python.org) (development was performed primarily with `v3.14`,
+    but this should work with all versions starting from `v3.10`)
 - [bash](https://gitforwindows.org)
 - the [justfile](https://github.com/casey/just?tab=readme-ov-file#installation) tool
+
+> [!IMPORTANT]
+> We also require an installation of [Zig](https://ziglang.org) for cross-compilation.
+> This avoids gcc-compiler issues on your local machine,
+> which the rust compiler requires to install some dependencies.
+
+Ensure paths to the binaries have been set.
+
+> [!TIP]
+> To verify, open a bash terminal and call.
+>
+> ```bash
+> just --version
+> # rust
+> rustup --version
+> rustc --version
+> cargo --version
+> # zig
+> zig version
+> ```
 
 ## Usage ##
 
@@ -47,8 +74,8 @@ Adjust the newly created .env file.
 Then run
 
 ```bash
-just build # to install dependencies, compile the code, build the bindings
-just build-bindings # to just build the bindings
+just build # builds the rust code base
+just build-py # builds bindings for python
 ```
 
 QA tasks are as follows
