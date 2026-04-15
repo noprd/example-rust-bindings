@@ -1,15 +1,12 @@
 [env]
 CC = "zig cc"
 CXX = "zig c++"
-PYO3_PYTHON = "python3"
 
 [target.'cfg(all())']
-# linker = "zig cc"
 rustflags = [
 ]
 
 [target.'cfg(unix)']
-# linker = "zig cc"
 rustflags = [
     "-A", "unused_imports",
     "-A", "dead_code",
@@ -24,9 +21,7 @@ rustflags = [
     "-C", "link-arg=dynamic_lookup",
 ]
 
-# TODO: check this
 [target.'cfg(windows)']
-# linker = "zig cc"
 rustflags = [
     "-A", "unused_imports",
     "-A", "dead_code",
