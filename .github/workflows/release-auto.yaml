@@ -1,40 +1,15 @@
-name: Build [+ Release] (manual)
+name: Build [+ Release] (auto)
 
 on:
   push:
     tags:
       - 'v*'  # trigger on creation of tags vX.Y.Z
 
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: |-
-          Choice of environment for pipeline
-        # NOTE: this option provides dropdown list of choices of environments set on GitHub (enterprise only)
-        type: environment
-        default: "local"
-
-      python-version:
-        description: 'Python version to use to build artefacts'
-        type: choice
-        options:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
-          - "3.14"
-        default: "3.14"
-
-      release-version:
-        description: 'Release version tag'
-        default: ""
-        type: string
-
 permissions:
   contents: write
 
 env:
-  PYTHON_VERSION: "${{ vars.PYTHON_VERSION }}"
+  environment: "local"
 
 jobs:
   build:
@@ -91,7 +66,7 @@ jobs:
       - name: Action - install Python
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: "${{ github.event.inputs.python-version || github.env.PYTHON_VERSION }}"
+          python-version: "${{ vars.PYTHON_VERSION }}"
 
       - name: Action - install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1.16.0
@@ -121,12 +96,12 @@ jobs:
 
   release:
     name: Release artefacts
-    if: ${{ startsWith(github.ref, 'refs/tags/') && (github.event.inputs.release-version || github.ref_name) != '' }}
+    if: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name != '' }}
     needs: [build]
     runs-on: "ubuntu-latest"
-    environment: "${{ github.event.inputs.environment }}"
+    environment: "${{ github.env.environment }}"
     env:
-      TAG: '${{ github.event.inputs.release-version || github.ref_name }}'
+      TAG: '${{ github.ref_name }}'
 
     steps:
       - name: Download all artifacts
