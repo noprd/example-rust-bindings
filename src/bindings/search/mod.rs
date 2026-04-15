@@ -1,4 +1,4 @@
-/// Bindings to handle bim/ifc methods
+/// Bindings to handle search algorithms
 
 pub mod methods;
 
