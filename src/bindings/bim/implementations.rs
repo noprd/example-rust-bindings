@@ -9,7 +9,6 @@ use pyo3::PyRef;
 use pyo3::PyRefMut;
 use pyo3::PyResult;
 use pyo3::Python;
-use pyo3::prelude::pyclass;
 use pyo3::prelude::pymethods;
 use pyo3::types::PyAny;
 use pyo3::types::PyTuple;
@@ -22,82 +21,28 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::result::Result;
 
-use crate::_core::errors::err_to_py_string;
-use crate::_core::errors::err_to_string;
-use crate::models::json::base::JsonConversion;
-use crate::models::json::model::ValueWrap;
-use crate::models::tree::base::GenericTree;
-
-// ----------------------------------------------------------------
-// STRUCTS
-// ----------------------------------------------------------------
-
-#[pyclass(get_all, set_all)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct PsetId {
-    #[serde(alias = "id")]
-    pub id_: i64,
-}
-
-#[pyclass(get_all, set_all)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Pset {
-    #[serde(alias = "id")]
-    pub id_: i64,
-    #[serde(alias = "class")]
-    pub class_: String,
-    // need this to be able to handle pyo3 traits
-    pub value: ValueWrap,
-    #[serde(alias = "value-type")]
-    pub value_type: Option<String>,
-}
-
-#[pyclass(get_all, set_all)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum PsetFlattenedValue {
-    Pset(Pset),
-    PsetId(PsetId),
-    Value(ValueWrap),
-}
-
-#[derive(Clone)]
-pub struct PsetFlattenedValueWithAddress {
-    addr: Option<String>,
-    entity: Option<PsetFlattenedValue>,
-}
-
-#[pyclass(get_all, set_all)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum PsetNestedValue {
-    Psets(Psets),
-    Any(ValueWrap),
-}
-
-#[pyclass(get_all, set_all)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub enum Psets {
-    Pset(Pset),
-    PsetId(PsetId),
-    Nested(HashMap<String, PsetNestedValue>),
-}
-
-#[pyclass]
-struct PsetsIterator {
-    entity: Psets,
-    index: usize,
-}
+use crate::bindings::err_to_string;
+use crate::bindings::err_to_py_exception;
+use crate::bindings::json::ValueWrap;
+use crate::bindings::json::JsonConversion;
+use crate::models::tree::GenericTree;
+use super::structs::PsetId;
+use super::structs::Pset;
+use super::structs::Psets;
+use super::structs::PsetNestedValue;
+use super::structs::PsetFlattenedValue;
+use super::structs::PsetFlattenedValueWithAddress;
+use super::structs::PsetsIterator;
 
 // ----------------------------------------------------------------
 // IMPLEMENTATIONS OF PsetId
 // ----------------------------------------------------------------
 
+
 #[pymethods]
 impl PsetId {
     #[new]
-    #[pyo3(signature = (/, *, id_))]
+    #[pyo3(signature = (*, id_))]
     pub fn new(id_: i64) -> PyResult<Self> {
         let result = Self { id_ };
         return Ok(result);
@@ -105,25 +50,25 @@ impl PsetId {
 
     #[staticmethod]
     fn __class_name__() -> String {
-        "PsetId".to_string()
+        return "PsetId".to_string();
     }
 
     #[staticmethod]
     #[pyo3(signature = (value, /))]
-    pub fn model_validate<'a>(value: &Bound<'a, PyAny>) -> PyResult<Self> {
-        let raw = ValueWrap::extract_bound(value)?;
-        let value = raw.to_json().map_err(err_to_py_string)?;
-        let result = Self::from_json(&value).map_err(err_to_py_string)?;
+    pub fn model_validate<'py>(value: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let raw = ValueWrap::extract(value.into())?;
+        let value = raw.to_json().map_err(err_to_py_exception)?;
+        let result = Self::from_json(&value).map_err(err_to_py_exception)?;
         return Ok(result);
     }
 
     pub fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+        return Ok(self.to_string());
     }
 
-    fn into_pyobject<'a>(&self, py: Python<'a>) -> PyResult<Bound<'a, PyAny>> {
-        let raw = self.to_json().map_err(err_to_py_string)?;
-        return ValueWrap(raw).into_pyobject(py);
+    fn into_pyobject<'py>(&self, ctx: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let raw = self.to_json().map_err(err_to_py_exception)?;
+        return ValueWrap(raw).into_pyobject(ctx);
     }
 }
 
@@ -153,7 +98,7 @@ impl JsonConversion<Value> for PsetId {
     }
 
     fn to_json(&self) -> Result<Value, String> {
-        let result = json!({"id": self.id_});
+        let result = json!({"id_": self.id_});
         return Ok(result);
     }
 }
@@ -165,14 +110,14 @@ impl JsonConversion<Value> for PsetId {
 #[pymethods]
 impl Pset {
     #[new]
-    #[pyo3(signature = (/, *, id_, class_, value, value_type=None))]
+    #[pyo3(signature = (*, id_, class_, value, value_type=None))]
     pub fn new(
         id_: i64,
         class_: String,
         value: &Bound<'_, PyAny>,
         value_type: Option<String>,
     ) -> PyResult<Self> {
-        let value = ValueWrap::extract_bound(value)?;
+        let value = ValueWrap::extract(value.into())?;
         let result = Self {
             id_,
             class_,
@@ -184,25 +129,25 @@ impl Pset {
 
     #[staticmethod]
     fn __class_name__() -> String {
-        "Pset".to_string()
+        return "Pset".to_string();
     }
 
     #[staticmethod]
     #[pyo3(signature = (value, /))]
-    pub fn model_validate<'a>(value: &Bound<'a, PyAny>) -> PyResult<Self> {
-        let raw = ValueWrap::extract_bound(value)?;
-        let value = raw.to_json().map_err(err_to_py_string)?;
-        let result = Self::from_json(&value).map_err(err_to_py_string)?;
+    pub fn model_validate<'py>(value: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let raw = ValueWrap::extract(value.into())?;
+        let value = raw.to_json().map_err(err_to_py_exception)?;
+        let result = Self::from_json(&value).map_err(err_to_py_exception)?;
         return Ok(result);
     }
 
     pub fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+        return Ok(self.to_string());
     }
 
-    fn into_pyobject<'a>(&self, py: Python<'a>) -> PyResult<Bound<'a, PyAny>> {
-        let raw = self.to_json().map_err(err_to_py_string)?;
-        return ValueWrap(raw).into_pyobject(py);
+    fn into_pyobject<'py>(&self, ctx: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let raw = self.to_json().map_err(err_to_py_exception)?;
+        return ValueWrap(raw).into_pyobject(ctx);
     }
 }
 
@@ -256,18 +201,18 @@ impl PsetNestedValue {
     #[new]
     #[pyo3(signature = (value, /))]
     pub fn new(value: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let raw = ValueWrap::extract_bound(value)?;
-        let value = raw.to_json().map_err(err_to_py_string)?;
-        let result = Self::from_json(&value).map_err(err_to_py_string)?;
+        let raw = ValueWrap::extract(value.into())?;
+        let value = raw.to_json().map_err(err_to_py_exception)?;
+        let result = Self::from_json(&value).map_err(err_to_py_exception)?;
         return Ok(result);
     }
 
     #[staticmethod]
     #[pyo3(signature = (value, /))]
     pub fn model_validate(value: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let raw = ValueWrap::extract_bound(value)?;
-        let value = raw.to_json().map_err(err_to_py_string)?;
-        let result = Self::from_json(&value).map_err(err_to_py_string)?;
+        let raw = ValueWrap::extract(value.into())?;
+        let value = raw.to_json().map_err(err_to_py_exception)?;
+        let result = Self::from_json(&value).map_err(err_to_py_exception)?;
         return Ok(result);
     }
 
@@ -434,9 +379,9 @@ impl Psets {
     #[new]
     #[pyo3(signature = (value, /))]
     pub fn new(value: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let raw = ValueWrap::extract_bound(value)?;
-        let value = raw.to_json().map_err(err_to_py_string)?;
-        let result = Self::from_json(&value).map_err(err_to_py_string)?;
+        let raw = ValueWrap::extract(value.into())?;
+        let value = raw.to_json().map_err(err_to_py_exception)?;
+        let result = Self::from_json(&value).map_err(err_to_py_exception)?;
         return Ok(result);
     }
 
@@ -452,9 +397,9 @@ impl Psets {
     #[staticmethod]
     #[pyo3(signature = (value, /))]
     pub fn model_validate(value: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let raw = ValueWrap::extract_bound(value)?;
-        let value = raw.to_json().map_err(err_to_py_string)?;
-        let result = Self::from_json(&value).map_err(err_to_py_string)?;
+        let raw = ValueWrap::extract(value.into())?;
+        let value = raw.to_json().map_err(err_to_py_exception)?;
+        let result = Self::from_json(&value).map_err(err_to_py_exception)?;
         return Ok(result);
     }
 
@@ -462,27 +407,27 @@ impl Psets {
         Ok(self.to_string())
     }
 
-    #[pyo3(signature = (/, *, delimiter=":".to_string()))]
-    fn flatten<'a>(
+    #[pyo3(signature = (*, delimiter=":".to_string()))]
+    fn flatten<'py>(
         &self,
-        py: Python<'a>,
+        ctx: Python<'py>,
         delimiter: String,
-    ) -> PyResult<HashMap<String, Bound<'a, PyAny>>> {
+    ) -> PyResult<HashMap<String, Bound<'py, PyAny>>> {
         let elements = self
             .rust_flatten(Some(&delimiter), None)
             .iter()
             .map(|(key, x)| match x {
                 PsetFlattenedValue::Pset(x) => {
-                    let value = x.into_pyobject(py).unwrap();
+                    let value = x.into_pyobject(ctx).unwrap();
                     return (key.clone(), value);
                 }
                 PsetFlattenedValue::PsetId(x) => {
-                    let value = x.into_pyobject(py).unwrap();
+                    let value = x.into_pyobject(ctx).unwrap();
                     return (key.clone(), value);
                 }
                 PsetFlattenedValue::Value(value) => {
                     let value = value.clone();
-                    let value = value.into_pyobject(py).unwrap();
+                    let value = value.into_pyobject(ctx).unwrap();
                     return (key.clone(), value);
                 }
             })
@@ -491,24 +436,24 @@ impl Psets {
     }
 
     // #[pyo3(signature = ())]
-    // fn walk<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
+    // fn walk<'py>(&self, ctx: Python<'py>) -> PyResult<Bound<'py, PyList>> {
     //     match self {
     //         Psets::Pset(x) => {
-    //             let key = ValueWrap(Value::Null).into_pyobject(py)?;
-    //             let value = x.into_pyobject(py)?;
-    //             let pair = PyTuple::new(py, &vec![key, value]);
-    //             return PyList::new(py, &vec![pair]);
+    //             let key = ValueWrap(Value::Null).into_pyobject(ctx)?;
+    //             let value = x.into_pyobject(ctx)?;
+    //             let pair = PyTuple::new(ctx, &vec![key, value]);
+    //             return PyList::new(ctx, &vec![pair]);
     //         }
     //         Psets::PsetId(x) => {
-    //             let key = ValueWrap(Value::Null).into_pyobject(py)?;
-    //             let value = x.into_pyobject(py)?;
-    //             let pair = PyTuple::new(py, &vec![key, value]);
+    //             let key = ValueWrap(Value::Null).into_pyobject(ctx)?;
+    //             let value = x.into_pyobject(ctx)?;
+    //             let pair = PyTuple::new(ctx, &vec![key, value]);
     //             return pair;
     //         }
     //         Psets::Nested(elements) => {
-    //             let key = ValueWrap(Value::Null).into_pyobject(py)?;
-    //             let value = x.into_pyobject(py)?;
-    //             let pair = PyTuple::new(py, &vec![key, value]);
+    //             let key = ValueWrap(Value::Null).into_pyobject(ctx)?;
+    //             let value = x.into_pyobject(ctx)?;
+    //             let pair = PyTuple::new(ctx, &vec![key, value]);
     //             return pair;
     //         }
     //     }
@@ -580,15 +525,18 @@ impl PsetsIterator {
         slf
     }
 
-    fn __next__<'py>(mut slf: PyRefMut<'py, Self>, py: Python<'py>) -> Option<Bound<'py, PyTuple>> {
+    fn __next__<'py>(
+        mut slf: PyRefMut<'py, Self>,
+        ctx: Python<'py>,
+    ) -> Option<Bound<'py, PyTuple>> {
         let result;
         let index = slf.index;
         match &slf.entity {
             Psets::Pset(x) => match index {
                 0 => {
-                    let key = ValueWrap(Value::Null).into_pyobject(py).unwrap().into_any();
-                    let value = x.clone().into_pyobject(py).unwrap().into_any();
-                    let pair = PyTuple::new(py, vec![key, value]).unwrap();
+                    let key = ValueWrap(Value::Null).into_pyobject(ctx).unwrap().into_any();
+                    let value = x.clone().into_pyobject(ctx).unwrap().into_any();
+                    let pair = PyTuple::new(ctx, vec![key, value]).unwrap();
                     result = Some(pair);
                 }
                 _ => {
@@ -597,9 +545,9 @@ impl PsetsIterator {
             },
             Psets::PsetId(x) => match index {
                 0 => {
-                    let key = ValueWrap(Value::Null).into_pyobject(py).unwrap().into_any();
-                    let value = x.clone().into_pyobject(py).unwrap().into_any();
-                    let pair = PyTuple::new(py, vec![key, value]).unwrap();
+                    let key = ValueWrap(Value::Null).into_pyobject(ctx).unwrap().into_any();
+                    let value = x.clone().into_pyobject(ctx).unwrap().into_any();
+                    let pair = PyTuple::new(ctx, vec![key, value]).unwrap();
                     result = Some(pair);
                 }
                 _ => {
@@ -609,11 +557,11 @@ impl PsetsIterator {
             Psets::Nested(elements) => {
                 result = elements.iter().nth(index).map(|(key, x)| {
                     let key = ValueWrap(Value::String(key.clone()))
-                        .into_pyobject(py)
+                        .into_pyobject(ctx)
                         .unwrap()
                         .into_any();
-                    let value = x.clone().into_pyobject(py).unwrap().into_any();
-                    let pair = PyTuple::new(py, vec![key, value]).unwrap();
+                    let value = x.clone().into_pyobject(ctx).unwrap().into_any();
+                    let pair = PyTuple::new(ctx, vec![key, value]).unwrap();
                     return pair;
                 });
             }

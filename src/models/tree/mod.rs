@@ -1,5 +1,8 @@
-pub mod base;
-pub mod model;
+/// Models for handling tree-like objects
 
-#[cfg(test)]
-pub mod tests_model;
+pub mod structs;
+pub mod implementations;
+
+pub use structs::GenericTree;
+pub use structs::GenericTreeLike;
+pub use structs::GenericTreeOrRoot;

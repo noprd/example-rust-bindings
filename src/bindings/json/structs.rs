@@ -2,19 +2,13 @@
 /// IMPORTS
 /// ----------------------------------------------------------------
 
-use pyo3::exceptions::PyTypeError;
-use pyo3::exceptions::PyArithmeticError;
-use pyo3::exceptions::PyException;
-use pyo3::prelude::PyErr;
-use std::fmt::Debug;
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Value;
 
 /// ----------------------------------------------------------------
-/// METHODS
+/// STRUCTURES/TYPES
 /// ----------------------------------------------------------------
 
-pub fn err_to_string<E>(err: E) -> String
-where
-    E: Debug,
-{
-    format!("{err:?}")
-}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ValueWrap(pub Value);

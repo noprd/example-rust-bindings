@@ -1,7 +1,8 @@
-// ----------------------------------------------------------------
-// IMPORTS
-// ----------------------------------------------------------------
+/// ----------------------------------------------------------------
+/// IMPORTS
+/// ----------------------------------------------------------------
 
+use pyo3::Borrowed;
 use pyo3::Bound;
 use pyo3::FromPyObject;
 use pyo3::IntoPyObject;
@@ -22,19 +23,13 @@ use serde_json::Number;
 use serde_json::Value;
 use std::result::Result;
 
-use super::base::JsonConversion;
-use crate::_core::errors::err_to_py_string;
+use super::super::errors::err_to_py_exception_type;
+use super::ValueWrap;
+use super::JsonConversion;
 
-// ----------------------------------------------------------------
-// STRUCTURES/TYPES
-// ----------------------------------------------------------------
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ValueWrap(pub Value);
-
-// ----------------------------------------------------------------
-// IMPLEMENTATIONS OF ValueWrate
-// ----------------------------------------------------------------
+/// ----------------------------------------------------------------
+/// IMPLEMENTATIONS OF ValueWrate
+/// ----------------------------------------------------------------
 
 impl<'a> ValueWrap {
     pub fn to_python(self, py: Python<'a>) -> Result<Bound<'a, PyAny>, PyErr> {
@@ -54,8 +49,10 @@ impl JsonConversion<Value> for ValueWrap {
     }
 }
 
-impl<'a> FromPyObject<'a> for ValueWrap {
-    fn extract_bound(value: &Bound<'a, PyAny>) -> Result<Self, PyErr> {
+impl<'a, 'py: 'a> FromPyObject<'a, 'py> for ValueWrap {
+    type Error = PyErr;
+
+    fn extract(value: Borrowed<'a, 'py, PyAny>) -> Result<Self, Self::Error> {
         if value.is_none() {
             let result = ValueWrap(Value::Null);
             return Ok(result);
@@ -74,7 +71,7 @@ impl<'a> FromPyObject<'a> for ValueWrap {
         } else if let Ok(items) = value.extract::<Bound<'a, PyList>>() {
             let elements: Vec<Value> = items
                 .iter()
-                .map(|x| ValueWrap::extract_bound(&x).unwrap())
+                .map(|x| ValueWrap::extract(x.as_borrowed()).unwrap())
                 .map(|ValueWrap(x)| x)
                 .collect();
             let result = ValueWrap(Value::Array(elements));
@@ -84,7 +81,7 @@ impl<'a> FromPyObject<'a> for ValueWrap {
                 .into_iter()
                 .map(|(x, y)| {
                     let key: String = x.extract().unwrap();
-                    let value = ValueWrap::extract_bound(&y).unwrap();
+                    let value = ValueWrap::extract(y.as_borrowed()).unwrap();
                     return (key, value);
                 })
                 .map(|(x, ValueWrap(y))| (x, y))
@@ -92,7 +89,7 @@ impl<'a> FromPyObject<'a> for ValueWrap {
             let result = ValueWrap(Value::Object(elements));
             return Ok(result);
         } else {
-            return Err(err_to_py_string("Invalid type"));
+            return Err(err_to_py_exception_type("Invalid type"));
         }
     }
 }
@@ -130,7 +127,7 @@ impl<'a> IntoPyObject<'a> for ValueWrap {
                     let result = x.into_bound_py_any(py)?;
                     return Ok(result);
                 }
-                return Err(err_to_py_string("Invalid numerical type"));
+                return Err(err_to_py_exception_type("Invalid numerical type"));
             }
             Value::Array(items) => {
                 let elements: Vec<Self::Output> = items

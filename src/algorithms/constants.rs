@@ -2,19 +2,11 @@
 /// IMPORTS
 /// ----------------------------------------------------------------
 
-use pyo3::exceptions::PyTypeError;
-use pyo3::exceptions::PyArithmeticError;
-use pyo3::exceptions::PyException;
-use pyo3::prelude::PyErr;
-use std::fmt::Debug;
+use std::time::Duration;
 
 /// ----------------------------------------------------------------
-/// METHODS
+/// CONSTANTS
 /// ----------------------------------------------------------------
 
-pub fn err_to_string<E>(err: E) -> String
-where
-    E: Debug,
-{
-    format!("{err:?}")
-}
+pub const TIMEOUT: Duration = Duration::from_secs(10);
+pub const TOL: f64 = 1e-6;

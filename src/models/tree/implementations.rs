@@ -2,11 +2,9 @@
 // IMPORTS
 // ----------------------------------------------------------------
 
-use std::vec;
-
-use super::base::GenericTree;
-use super::base::GenericTreeLike;
-use super::base::GenericTreeOrRoot;
+use super::structs::GenericTree;
+use super::structs::GenericTreeLike;
+use super::structs::GenericTreeOrRoot;
 
 // ----------------------------------------------------------------
 // BASIC IMPLEMENTATION FOR GenericTree
