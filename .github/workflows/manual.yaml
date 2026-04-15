@@ -16,6 +16,17 @@ on:
         type: boolean
         default: false
 
+      python-version:
+        description: 'Python version to use to build artefacts'
+        type: choice
+        options:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+        default: "3.14"
+
       release:
         description: |-
           Release binary artefacts?
@@ -58,7 +69,7 @@ jobs:
       - name: Action - install Python
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: "${{ env.PYTHON_VERSION }}"
+          python-version: "${{ github.event.inputs.python-version || github.env.PYTHON_VERSION }}"
 
       - name: Setup - add .env file
         shell: bash
@@ -148,7 +159,7 @@ jobs:
       - name: Action - install Python
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: "${{ env.PYTHON_VERSION }}"
+          python-version: "${{ github.event.inputs.python-version || github.env.PYTHON_VERSION }}"
 
       - name: Action - install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1.16.0
