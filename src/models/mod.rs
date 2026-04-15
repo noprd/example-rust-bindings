@@ -1,3 +1,3 @@
-pub mod bim;
-pub mod json;
+/// Module containing models
+
 pub mod tree;

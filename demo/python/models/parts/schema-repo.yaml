@@ -1,0 +1,58 @@
+openapi: 3.0.3
+info:
+  version: "3.0.0"
+  title: 'Schemata for repository models'
+  description: |-
+    Models for extracting meta-data about the repository
+    in particular via pyproject.toml.
+servers:
+  - url: "https://acme.com"
+paths: {}
+components:
+  schemas:
+    # ----------------------------------------------------------------
+    # EXPORTS
+    # ----------------------------------------------------------------
+
+    Exports:
+      oneOf:
+        - $ref: "#/components/schemas/RepoInfo"
+
+    # ----------------------------------------------------------------
+    # DEFINITIONS
+    # ----------------------------------------------------------------
+
+    RepoInfo:
+      description: |-
+        Basic infos about repo - parses `pyproject.toml`
+      type: object
+      required:
+        - name
+        - description
+        - version
+        - urls
+      # NOTE: allow this, as this will be parsed from pyproject.toml
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        urls:
+          type: object
+          properties:
+            homepage:
+              type: string
+              format: uri
+              default: "https://domain.com"
+          additionalProperties:
+            type: string
+            format: uri
+
+    # ----------------------------------------------------------------
+    # ENUMS
+    # ----------------------------------------------------------------
+
+    #

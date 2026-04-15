@@ -1,58 +1,160 @@
 [project]
-name = 'example_package'
-version = "0.1.0"
+name = "example-package"
+version = "0.2.0"
 description = 'Example of rust bindings for python'
 authors = [
-    {name="noprd", email="noprd@users.noreply.github.com"},
+  {name="noprd", email='noprd@users.noreply.github.com'},
 ]
 urls = {homepage = 'https://github.com/noprd/example-rust-bindings'}
 maintainers = [
-    {name="noprd", email="noprd@users.noreply.github.com"},
+  {name="noprd", email='noprd@users.noreply.github.com'},
 ]
-license = 'LICENCE'
+license = "MIT"
+license-files = ["LICENCE"]
 readme = 'README.md'
 keywords = [
-    "python",
-    "rust",
+  "python",
+  "packages",
+  "rust",
 ]
 # cf. https://pypi.org/classifiers
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Environment :: Console",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 requires-python = ">=3.10,<3.15"
 
 dependencies = [
-    # --------------------------------
-    # compiler
-    # --------------------------------
-    "pip>=25.1.1",
-    # --------------------------------
-    # models
-    # --------------------------------
-    "pydantic>=2.11.5",
-    "pydantic-yaml>=1.5.1",
+  "pip>=26.0.1",
+  "pydantic[email]>=2.13.1",
 ]
 
 [dependency-groups]
 dev = [
-    "maturin>=1.8.6",
-    "uv>=0.7.8",
-    "ruff>=0.11.11",
+  "uv>=0.11.6",
+  "ruff>=0.15.10",
+  "maturin>=1.13.1",
 ]
 
-[tool.maturin]
-features = ["pyo3/extension-module"]
-bindings = "pyo3"
-
 [build-system]
-requires = ["maturin>=1.8.3,<2.0"]
+requires = [
+  "setuptools>=82.0.1",
+  "wheel>=0.46.3",
+  "maturin>=1.8.3,<2.0",
+]
 build-backend = "maturin"
+
+[tool.maturin]
+module-name = "example_package"
+crate-dir = "."
+path = "."
+bindings = "pyo3"
+features = [
+  "pyo3/extension-module",
+]
+
+[tool.uv]
+managed = true
+package = true
+default-groups = ["dev"]
+
+# [tool.uv.sources]
+# example-package = { workspace = true }
+
+[tool.uv.workspace]
+members = []
+
+# cf. https://docs.astral.sh/ruff/configuration
+# and https://docs.astral.sh/ruff/settings
+[tool.ruff]
+include = [
+    "pyproject.toml",
+    "*.pyi",
+]
+exclude = ["src/models/generated/**/*.py"]
+respect-gitignore = true
+line-length = 96
+indent-width = 4
+target-version = "py314"
+fix = true
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = ["D", "E", "F", "I", "RUF"]
+ignore = [
+    "ARG001", # allow unused arguments
+    "BLE001", # allow blind exceptions
+    "D100", # do not require docstring for module
+    "D101", # do not require docstring for module
+    "D102", # do not require docstring
+    "D103", # do not require docstring
+    "D104", # do not require docstring
+    "D105", # do not require docstring
+    "D106", # do not require docstring
+    "D107", # do not require docstring
+    "D200", # prevent docstrings from being forced to fit one-line
+    "D203",
+    "D205", # do not require blank line between summary and description in docstring
+    "D211",
+    "D212", # prevent first newline from being removed in docstrings
+    "D400", # prevent grammatical constraints (full stop)
+    "D401", # prevent grammatical constraints (imperative mood)
+    "D403", # prevent case changes in Docstrings.
+    "D404", # allow freedom of expression in docstrings
+    "D405", # allow non-capitalised-section-name
+    "D413", # allow missing-blank-line-after-last-section
+    "D415", # do not require punctuation in docstring
+    "EXE001", # allow unused shebangs
+    "E402", # allow module level import to be not at top of file
+    "E501", # ignore "line too long" errors in case "fmt: skip" pragma is used
+    # "E703",
+    "E712", # turn off, as sometimes variables have mixed boolean + string/null types
+    "E731", # allow lambda expressions
+    "F403", # disable as conflicts with *-imports
+    "F405", # disable as conflicts with *-imports
+    # "F541", # allow f-string without placeholders
+    "F841", # unused variables - need to switch off e.g. for decorators
+    "F811", # allow redefinition of methods
+    # "I100", # disable imports from same library being forced into a single ,-separated statement
+    # "I102", # disable multiple import formatting
+    "RUF001", # allow utf8 in comments
+    "RUF003", # allow NO-BREAK SPACE in comments
+    "RUF018", # allow assignment expressions in asserts
+    "RUF028", # allow suppression comments within parts
+    "S110", # allow try-except-pass
+    "TID252", # allow relative imports from parent modules
+    "UP009", # allow utf-8 shebangs
+]
+
+[tool.ruff.lint.isort]
+relative-imports-order = "furthest-to-closest"
+no-sections = false
+from-first = false
+combine-as-imports = false
+case-sensitive = true
+force-single-line = true
+# known-local-folder = ["src", "tests"]
+known-first-party = ["src", "tests"]
+forced-separate = [
+    "tests",
+    "src._core",
+    "src.setup",
+    "src.models",
+    "src",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false # false = allow trailing comma
+docstring-code-format = false
+docstring-code-line-length = "dynamic"

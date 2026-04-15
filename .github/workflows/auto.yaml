@@ -35,67 +35,40 @@ jobs:
     runs-on: "ubuntu-latest"
     environment: "local"
     env:
-      ARCHITECTURE: "${{ vars.ARCHITECTURE }}"
-      PYTHON_PATH: "${{ vars.PYTHON_PATH }}"
-      MODULE_NAME: "${{ vars.MODULE_NAME }}"
+      CARGO_BUILD_TARGET: "x86_64-unknown-linux-gnu"
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.2
 
       - name: Action - install justfile tool
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@v4
         with:
-          just-version: "1.25.2"
+          just-version: "*"
 
       - name: Action - install zig
         uses: goto-bus-stop/setup-zig@v2.2.1
         with:
-          version: "0.12.0"
-
-      # - name: Action - install rust
-      #   uses: actions-rust-lang/setup-rust-toolchain@v1.12.0
-
-      - name: Action - install rust and set to stable
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          target: "${{ env.ARCHITECTURE }}"
-          toolchain: stable
-          override: true
+          version: "0.15.1"
 
       - name: Action - install Python
-        uses: actions/setup-python@v5.6.0
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: "${{ env.PYTHON_VERSION }}"
 
-      # - name: SETUP - install python venv
-      #   shell: bash
-      #   run: |-
-      #     just build-venv
-      #
-      # - name: Action install maturin
-      #   uses: PyO3/maturin-action@v1.49.1
-      #   with:
-      #     command: develop
-      #     args: --release --bindings pyo3 --ignore-rust-version
-      #     # sccache: 'true'
-      #     manylinux: "auto"
-      #     # manylinux: "musllinux"
-      #     # target: "${{ env.ARCHITECTURE }}"
-      #     rust-toolchain: stable
+      - name: Setup - add .env file
+        shell: bash
+        run: |-
+          just setup
+          touch .env
+          cat <<EOF > .env
+          MODULE_NAME="${{vars.MODULE_NAME}}"
+          PYTHON_PATH="${{ vars.PYTHON_PATH }}"
+          CARGO_BUILD_TARGET="${{ env.CARGO_BUILD_TARGET }}"
+          EOF
 
       - name: STEP 1 - build code
         shell: bash
         run: |-
-          just setup
-
-          touch .env && rm .env
-          echo "
-          MODULE_NAME="${{ vars.MODULE_NAME }}"
-          PYTHON_PATH="python${{ env.PYTHON_VERSION }}"
-          ARCHITECTURE="${{ env.ARCHITECTURE }}"
-          RUST_BACKTRACE=full
-          " > .env
-
           just build
 
       - name:  STEP 2 - check linting
@@ -107,3 +80,8 @@ jobs:
         shell: bash
         run: |-
           just tests-unit
+
+      - name:  STEP 4 - run behavioural tests
+        shell: bash
+        run: |-
+          echo "Not yet implemented"

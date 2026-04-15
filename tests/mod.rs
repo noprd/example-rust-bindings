@@ -1,4 +1,4 @@
-extern crate example_package;
-extern crate rstest;
+/// Unit tests for crate
 
-// pub mod test_module_name;
+extern crate rstest;
+extern crate example_package;

@@ -1,8 +1,10 @@
 [package]
-name = "example_package"
-version = "0.1.0"
+name = "example-package"
+description = "Example of rust bindings for python"
+version = "0.2.0"
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.94.1"
+license = "MIT"
 authors = [
     "noprd <noprd@users.noreply.github.com>",
 ]
@@ -18,31 +20,53 @@ members = [
 ]
 
 [profile.release]
+# rustflags = [
+#     "-A", "unused_imports",
+#     "-A", "dead_code",
+#     "-C", "link-arg=-undefined",
+#     "-C", "link-arg=dynamic_lookup",
+# ]
 debug = false
 strip = false
+opt-level = 3
+lto = true # link-time optimisation
+codegen-units = 1
 
 [profile.dev]
+# rustflags = [
+#     "-A", "unused_imports",
+#     "-A", "dead_code",
+# ]
 debug = true
 strip = false
+opt-level = 0
+lto = false # link-time optimisation
 
 [profile.test]
 debug = true
 strip = false
 
+[lints.rust]
+unused = "allow"
+dead_code = "allow"
+
 [dependencies]
-cargo-zigbuild = {version = "^0.20.0"}
-pyo3 = {version = "^0.25.0", features = ["extension-module", "abi3"]}
-serde = {version = "^1.0.219", features = ["derive"]}
-serde_json = {version = "^1.0.140"}
+cargo-zigbuild = {version = "^0.22.1"}
+pyo3 = {version = "^0.28.3", features = ["extension-module", "abi3"]}
+serde = {version = "^1.0.225", features = ["derive"]}
+serde_json = {version = "^1.0.149"}
 dict_derive = {version = "^0.6.0" }
 dedent = {version = "^0.1.1"}
+indicatif = {version = "^0.18.0"}
+tabled = {version = "^0.20.0"}
+rayon = {version = "^1.12.0"}
 
 [dev-dependencies]
-rstest = {version = "^0.25.0"}
-# NOTE: causes issues with dependency extrpim
-# rustfmt = {version = "^0.10.0"}
+rstest = {version = "^0.26.1"}
+rustfmt = {version = "^0.10.0", features = []}
+# just = {version = "^1.40.0"}
 
 # NOTE: currently unused
-# [[bin]]
-# name="programme"
-# path="src/main.rs"
+[[bin]]
+name="Example"
+path="src/bin/demo/example.rs"

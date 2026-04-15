@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  version: "3.0.0"
+  title: 'Schemata for basic models'
+  description: |-
+    Models for non-applicaiton specific enumerations and data structures
+servers:
+  - url: "https://acme.com"
+paths: {}
+components:
+  schemas:
+    # ----------------------------------------------------------------
+    # EXPORTS
+    # ----------------------------------------------------------------
+
+    Exports:
+      oneOf:
+        - $ref: "#/components/schemas/JsonTypeBasic"
+        - $ref: "#/components/schemas/JsonType"
+
+    # ----------------------------------------------------------------
+    # DEFINITIONS
+    # ----------------------------------------------------------------
+
+    JsonTypeBasic:
+      description: |-
+        Extended basic json types
+      nullable: true
+      oneOf:
+        - type: boolean
+        - type: string
+        - type: integer
+        - type: number
+        - type: string
+          format: date-time
+
+    JsonType:
+      description: |-
+        Recursive type based on extended basic json types
+      oneOf:
+        - $ref: "#/components/schemas/JsonTypeBasic"
+        - type: array
+          items:
+            $ref: "#/components/schemas/JsonType"
+        - type: object
+          additionalProperties:
+            $ref: "#/components/schemas/JsonType"
+
+    # ----------------------------------------------------------------
+    # ENUMS
+    # ----------------------------------------------------------------
+
+    #

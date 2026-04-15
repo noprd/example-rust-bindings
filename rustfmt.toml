@@ -1,0 +1,31 @@
+# see https://rust-lang.github.io/rustfmt
+unstable_features = true
+style_edition = "2024"
+reorder_imports = false
+combine_control_expr = false
+condense_wildcard_suffixes = false
+disable_all_formatting = false
+use_small_heuristics = "Off"
+newline_style = "Native"
+
+fn_params_layout = "Tall"
+fn_call_width = 0 # force line break on (trailing) comma
+# fn_call_width = 60
+fn_single_line = false
+use_field_init_shorthand = true
+
+hard_tabs = false
+trailing_comma = "Vertical"
+trailing_semicolon = true
+overflow_delimited_expr = true
+
+format_strings = false
+force_explicit_abi = true
+
+struct_lit_width = 40
+max_width = 1_000
+comment_width = 200
+normalize_comments = false
+normalize_doc_attributes = false
+wrap_comments = false
+brace_style = "PreferSameLine"

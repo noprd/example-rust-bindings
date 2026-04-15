@@ -1,6 +1,6 @@
 /**
-!/.gitignore
 !/.gitattributes
+!/.gitignore
 
 # ----------------------------------------------------------------
 # ROOT
@@ -10,10 +10,12 @@
 !/LICENCE
 !/justfile
 !/Cargo.toml
-!/pyproject.toml
-!/*.lock
+!/rustfmt.toml
 !/.cargo
 !/.cargo/config.toml
+!/pyproject.toml
+!/*.lock
+# for git workflows
 !/.github
 !/.github/workflows
 !/.github/workflows/*.yaml
@@ -24,10 +26,6 @@
 
 !/templates
 !/templates/template*
-
-!/docs
-!/docs/**/
-!/docs/**/*.md
 
 !/src
 !/src/**/
@@ -41,18 +39,17 @@
 !/dist
 !/dist/VERSION
 
+!/demo
+!/demo/python
+
 # ----------------------------------------------------------------
 # FORCE REMOVE
 # ----------------------------------------------------------------
 
-**/logs
-**/.vscode
-**/*.tmp
 **/.DS_Store
-**/__archive__*
-**/__pycache__*
-/build
 /target
+**/__pycache__*
+**/__archive__*
 
 # ----------------------------------------------------------------
 # FORCE RETAIN
