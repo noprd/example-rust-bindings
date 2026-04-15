@@ -6,3 +6,6 @@ pub mod implementations;
 pub use structs::GenericTree;
 pub use structs::GenericTreeLike;
 pub use structs::GenericTreeOrRoot;
+
+#[cfg(test)]
+pub mod tests_structs;
