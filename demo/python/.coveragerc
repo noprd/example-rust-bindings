@@ -1,0 +1,25 @@
+[run]
+source="."
+
+[report]
+show_missing = true
+omit =
+    # ignore all archive-like files
+    **/__archive__*
+    # ignore tests folder and all files with 'tests_' prefix
+    tests/*
+    **/tests*.py
+    **/test*.py
+    # ignore build
+    build/*
+    # ignore scripts
+    scripts/*
+    # ignore __init__ files (mainly used for exports)
+    **/__init__.py
+    # ignore models folder (auto generated)
+    src/models/generated/**
+# NOTE: set to 100 if want 100% coverage!
+fail_under = 0
+precision = 1
+exclude_lines =
+    pragma: no cover
