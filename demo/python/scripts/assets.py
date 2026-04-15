@@ -89,6 +89,12 @@ def parse_cli_args(*args: str) -> ArgumentParser:
         help="github release tag",
     )
     parser.add_argument(
+        "--tag-short",
+        type=str,
+        required=True,
+        help="short version of github release tag",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=str,
@@ -151,6 +157,14 @@ def get_environment(path: str, /) -> dict[str, str]:
 
 if __name__ == "__main__":
     args = parse_cli_args(*sys.argv[1:])
+
+    logging.basicConfig(
+        format="%(asctime)s $\x1b[92;1m%(name)s\x1b[0m [\x1b[1m%(levelname)s\x1b[0m] %(message)s",
+        datefmt=r"%Y-%m-%d %H:%M:%S",
+        encoding="utf-8",
+    )
+    logging.getLogger(name="root").setLevel(logging.INFO)
+
     env = get_environment(args.env)
     module = args.module
     token = env["GIT_PAT"]
@@ -161,8 +175,7 @@ if __name__ == "__main__":
 
     logging.info("load list of assets")
     httpx.Headers()
-    tag = re.sub(pattern=r"^v?(.*)$", repl=r"\1", string=args.tag)
-    url = URL_LIST_ASSETS.format(owner=args.owner, repo=args.repo, tag=f"v{tag}")  # fmt: skip
+    url = URL_LIST_ASSETS.format(owner=args.owner, repo=args.repo, tag=args.tag)  # fmt: skip
     headers = {
         "Accept": MediaTypes.JSON,
         "X-GitHub-Api-Version": API_VERSION,
@@ -187,7 +200,7 @@ if __name__ == "__main__":
         parts = [*parts, "", ""]
         module_, tag_ = parts[:2]
 
-        if ext != EXT_ARTEFACT or tag != tag_ or module != module_:
+        if ext != EXT_ARTEFACT or args.tag_short != tag_ or module != module_:
             continue
 
         logging.info(f"load asset({index}) /{id}: '{basename}'")

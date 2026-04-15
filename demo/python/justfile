@@ -203,6 +203,7 @@ load-assets module:
         --owner "${GIT_OWNER}" \
         --repo "${GIT_REPO}" \
         --tag "${GIT_TAG}" \
+        --tag-short "${GIT_TAG_SHORT}" \
         --module "{{module}}" \
         -o "dist"
 
