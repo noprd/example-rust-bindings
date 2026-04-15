@@ -78,10 +78,10 @@ first-party = [
     # builds package from source code - requires local machine to have rust/cargo
     # "example-package @ git+https://${GIT_PAT}@github.com/noprd/example-package.git@v0.0.0#egg=example-package",
     # loads package from appropriate binary - requires download (automatic or manual) of all .whl files in advance
-    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64'",
-    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64'",
-    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'amd64'",
+    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.14'",
+    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.14'",
+    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.14'",
+    "example-package @ file://${PWD}/dist/example_package-${GIT_TAG_SHORT}-cp314-abi3-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'amd64' and python_version == '3.14'",
 ]
 
 dev = [
