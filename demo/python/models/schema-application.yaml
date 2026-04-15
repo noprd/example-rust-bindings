@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  version: "0.0.0"
+  title: Schemata for config files.
+servers:
+  - url: "https://acme.com"
+paths: {}
+components:
+  schemas:
+    # ----------------------------------------------------------------
+    # IMPORTS
+    # ----------------------------------------------------------------
+
+    Imports:
+      oneOf:
+        # models for handling repo settings
+        - $ref: "parts/schema-repo.yaml/#/components/schemas/Exports"
+
+        # for general agnostic modules
+        - $ref: "parts/schema-basic.yaml/#/components/schemas/Exports"

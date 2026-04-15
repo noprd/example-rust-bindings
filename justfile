@@ -6,6 +6,7 @@
 # if they involve bash-syntax, e.g. 'if [[ ... ]] then else fi'.
 # ----------------------------------------------------------------
 # set shell := [ "bash", "-c" ]
+
 _default:
     @- just --unsorted --list
 
@@ -20,16 +21,18 @@ menu:
 set dotenv-load := true
 set positional-arguments := true
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 # VARIABLES
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 
 PATH_ROOT := justfile_directory()
 CURRENT_DIR := invocation_directory()
 OS := if os_family() == "windows" { "windows" } else { "linux" }
 PYVENV_ON := if os_family() == "windows" { ". .venv/Scripts/activate" } else { ". .venv/bin/activate" }
 PYVENV := if os_family() == "windows" { "python" } else { "python3" }
+PYLINTING := "ruff"
 RUST_TO_PY_BINDINGS := "maturin"
+ZIG_FLAG := if os_family() == "windows" { "" } else { "--zig" }
 
 # --------------------------------
 # Macros
@@ -50,8 +53,8 @@ _clean-all-folders path pattern:
 _check-tool tool name:
     #!/usr/bin/env bash
     success=false
-    {{PYVENV_ON}} && {{tool}} --version >> /dev/null 2> /dev/null && success=true;
-    {{PYVENV_ON}} && {{tool}} --help >> /dev/null 2> /dev/null && success=true;
+    {{tool}} --version >> /dev/null 2> /dev/null && success=true;
+    {{tool}} --help >> /dev/null 2> /dev/null && success=true;
     # NOTE: if exitcode is 251 (= help or print version), then render success.
     if [[ "$?" == "251" ]]; then success=true; fi
     # FAIL tool not installed
@@ -95,198 +98,238 @@ _rust_path_to_test_module path:
 # TARGETS
 # ----------------------------------------------------------------
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 # TARGETS: build
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 
+[group("build")]
 setup:
     @echo "TASK: SETUP"
-    @- cp -n "templates/template.env" ".env"
+    - cp -n "templates/template.env" ".env"
     @rustup toolchain install stable
     @rustup update
     @rustup override set stable
 
-build:
-    @echo "TASK: BUILD"
-    @- just build-venv
+[group("build")]
+build module="Main" build="zigbuild":
+    @echo "Build using 'cargo {{build}}'"
     @just build-requirements
+    @just build-compile "{{build}}"
+    @# just build-binary "{{module}}" "{{build}}"
     @just check-system-requirements
-    @just build-compile
 
-build-venv:
-    @echo "SUBTASK: create venv if not exists"
-    @${PYTHON_PATH} -m venv .venv 2> /dev/null
+[group("build")]
+build-develop module="Main":
+    @just build "{{module}}" "build"
 
+[group("build")]
 build-requirements:
-    @just build-requirements-basic
-    @just build-requirements-dependencies
+    @- cargo +stable install --locked cargo-zigbuild 2> /dev/null
 
-build-requirements-basic:
-    @echo "SUBTASK: build basic dependencies"
-    @# cargo update --verbose --offline
-    @{{PYVENV_ON}} && {{PYVENV}} -m pip install --upgrade pip
-    @{{PYVENV_ON}} && {{PYVENV}} -m pip install ruff uv
+[group("build")]
+build-binary module="Main" build="zigbuild":
+    @rustup override set stable
+    @cargo +stable {{build}} --target-dir "target" --release --bin "{{module}}"
+    @cp "target/release/{{module}}" dist
 
-build-requirements-dependencies:
-    @echo "SUBTASK: build dependencies"
-    @cargo install --locked cargo-zigbuild
-    @{{PYVENV_ON}} && {{PYVENV}} -m uv pip install \
-        --exact \
-        --strict \
+[group("build")]
+build-compile build="zigbuild":
+    @rustup override set stable
+    @cargo +stable {{build}} --target-dir "target" --release --lib
+
+[group("build/python")]
+build-py:
+    @echo "TASK: BUILD BINDINGS FOR PYTHON"
+    @- just build-py-venv
+    @just build-py-requirements
+    @just build-py-bindings
+
+[group("build/python")]
+build-py-venv:
+    @echo "SUBTASK: create venv if not exists"
+    @${PYTHON_PATH} -m venv .venv
+
+[group("build/python")]
+build-py-requirements:
+    @echo "SUBTASK: build requirements"
+    @just build-py-requirements-basic
+    @just build-py-requirements-dependencies
+
+[group("build/python")]
+build-py-requirements-basic:
+    @- {{PYVENV_ON}} && {{PYVENV}} -m pip install --upgrade pip 2> /dev/null
+    @{{PYVENV_ON}} && pip install ruff uv
+
+[group("build")]
+build-py-requirements-dependencies:
+    @echo "BUILD PACKAGE with dev dependencies"
+    @{{PYVENV_ON}} && {{PYVENV}} -m uv sync \
+        --verbose \
+        --active \
         --compile-bytecode \
-        --no-python-downloads \
-        --requirements pyproject.toml
-    @{{PYVENV_ON}} && {{PYVENV}} -m uv sync
+        --no-managed-python \
+        --no-python-downloads
 
-build-compile module="${MODULE_NAME}":
-    @echo "SUBTASK: compile"
-    @cargo zigbuild --target-dir "target" --release --lib
-    @# cargo zigbuild --target-dir "target" --release --bin "{{module}}"
-
-build-bindings:
-    @echo "TASK: build bindings for python"
-    @{{PYVENV_ON}} && {{PYVENV}} -m {{RUST_TO_PY_BINDINGS}} develop \
+[group("build/python")]
+build-py-bindings:
+    @echo "Build compiled bindings."
+    @{{PYVENV_ON}} && {{PYVENV}} -m {{RUST_TO_PY_BINDINGS}} build {{ZIG_FLAG}} \
         --bindings pyo3 \
         --ignore-rust-version \
-        --release
+        --release \
+        --target "${CARGO_BUILD_TARGET}" \
+        --out "dist"
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 # TARGETS: execution
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 
-run-rust module *args:
+[group("exec")]
+run-rust module="${DEFAULT_MODULE:-UNKNOWN}" *args:
     @echo "Not yet implemented"
-    @# just build-compile "{{module}}"
-    @# cargo run --bin "{{module}}"
+    @just build-binary "{{module}}"
+    @cargo run --bin "{{module}}"
     @# "./target/release/{{module}}" {{args}}
 
 # --------------------------------
 # TARGETS: development
 # --------------------------------
 
-dev *args:
+[group("dev")]
+dev-rust *args:
+    @echo "Run development script for rust"
     @echo "Not yet implemented"
+
+[group("dev")]
+dev-py *args:
+    @echo "Run development script for python"
+    @{{PYVENV_ON}} && {{PYVENV}} -m dev {{args}}
+
 # --------------------------------
 # TARGETS: tests
 # --------------------------------
 
+[group("tests")]
 tests:
     @just tests-unit
 
-tests-logs log_path="logs":
-    @just _reset-logs "{{log_path}}"
-    @- just tests
-    @just _display-logs
+[group("tests")]
+tests-logs:
+    @just tests
 
+[group("tests")]
 test-unit path *args:
-    @cargo zigbuild --tests
+    @cargo +stable zigbuild --tests
     @echo "run unit tests in $( just _rust_path_to_test_module "{{path}}")"
-    @cargo test --lib "$( just _rust_path_to_test_module "{{path}}")" {{args}}
+    @cargo +stable test --lib "$( just _rust_path_to_test_module "{{path}}")" {{args}} -- --nocapture
     @# echo "run unit tests in $( just _rust_path_to_module "{{path}}")"
-    @# cargo test --lib "$( just _rust_path_to_module "{{path}}")" {{args}}
+    @# cargo +stable test --lib "$( just _rust_path_to_module "{{path}}")" {{args}} -- --nocapture
 
+[group("tests")]
 test-unit-optimised path *args:
-    @cargo zigbuild --tests --release
+    @cargo +stable zigbuild --tests --release
     @echo "run unit tests in $( just _rust_path_to_test_module "{{path}}")"
-    @cargo test --lib "$( just _rust_path_to_test_module "{{path}}")" {{args}}
+    @cargo +stable test --lib "$( just _rust_path_to_test_module "{{path}}")" {{args}} -- --nocapture
     @# echo "run unit tests in $( just _rust_path_to_module "{{path}}")"
-    @# cargo test --lib "$( just _rust_path_to_module "{{path}}")" {{args}}
+    @# cargo +stable test --lib "$( just _rust_path_to_module "{{path}}")" {{args}} -- --nocapture
 
+[group("tests")]
 tests-unit *args:
-    @just _reset-logs
-    @cargo zigbuild --tests
-    @cargo test --lib {{args}}
+    @# cargo +stable zigbuild --tests
+    @cargo +stable test --lib {{args}} -- --nocapture
 
+[group("tests")]
 tests-unit-optimised *args:
-    @just _reset-logs
-    @cargo zigbuild --tests --release
-    @cargo test --lib {{args}}
+    @# cargo +stable zigbuild --tests --release
+    @cargo +stable test --release --bin {{args}} -- --nocapture
 
 # --------------------------------
 # TARGETS: prettify
 # --------------------------------
 
+[group("linting")]
+lint path:
+    @{{PYVENV_ON}} && {{PYVENV}} -m {{PYLINTING}} check \
+        --respect-gitignore \
+        --show-fixes \
+        --no-unsafe-fixes \
+        --exit-zero \
+        --fix \
+        "{{path}}"
+    @{{PYVENV_ON}} && {{PYVENV}} -m {{PYLINTING}} format \
+        --respect-gitignore \
+        "{{path}}"
+
+[group("linting")]
+lint-dry path:
+    @{{PYVENV_ON}} && {{PYVENV}} -m {{PYLINTING}} check \
+        --respect-gitignore \
+        --no-unsafe-fixes \
+        --exit-zero \
+        --diff \
+        "{{path}}"
+
+[group("linting")]
+lint-check path:
+    @{{PYVENV_ON}} && {{PYVENV}} -m {{PYLINTING}} check \
+        --respect-gitignore \
+        --no-unsafe-fixes \
+        --exit-zero \
+        --verbose \
+        "{{path}}"
+
+[group("linting")]
 prettify:
-    @cargo fmt --verbose
+    @echo "Force format not activated - running dry format instead"
+    @- just prettify-dry 2> /dev/null
+    @# cargo fmt --verbose
+    @# cargo +nightly fmt --all --verbose -- --config-path rustfmt.toml
+    @- just lint "${MODULE_NAME}.pyi" 2> /dev/null
 
+[group("linting")]
 prettify-dry:
-    @cargo fmt --verbose
-    @cargo fmt --verbose --check
+    @# cargo fmt --verbose --check
+    @cargo +nightly fmt --all --verbose --check -- --config-path rustfmt.toml
+    @- just lint-dry "${MODULE_NAME}.pyi" 2> /dev/null
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 # TARGETS: clean
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# --------------------------------
 
-clean log_path="logs":
+[group("clean")]
+clean:
     @just clean-venv
-    @just clean-basic "{{log_path}}"
+    @just clean-basic
 
-clean-basic log_path="logs":
+[group("clean")]
+clean-basic:
     @echo "All system artefacts will be force removed."
     @- just _clean-all-files "." ".DS_Store" 2> /dev/null
     @echo "All build artefacts will be force removed."
+    @cargo clean
+    @- rm -rf "target"
+    @just _clean-all-files "." "*.rs.bk"
     @- rm -rf ".venv" 2> /dev/null
     @- rm -rf "target" 2> /dev/null
 
+[group("clean")]
 clean-venv:
     @echo "VENV will be removed."
     @- just _delete-if-folder-exists ".venv" 2> /dev/null
 
 # --------------------------------
-# TARGETS: logging, session
+# TARGETS: requirements
 # --------------------------------
 
-_clear-logs log_path="logs":
-    @rm -rf "{{log_path}}" 2> /dev/null
-
-_create-logs log_path="logs":
-    @just _create-logs-part "debug" "{{log_path}}"
-    @just _create-logs-part "out" "{{log_path}}"
-    @just _create-logs-part "err" "{{log_path}}"
-
-_create-logs-part part log_path="logs":
-    @mkdir -p "{{log_path}}"
-    @touch "{{log_path}}/{{part}}.log"
-
-_reset-logs log_path="logs":
-    @rm -rf "{{log_path}}" 2> /dev/null
-    @just _create-logs "{{log_path}}"
-
-_display-logs:
-    @echo ""
-    @echo "Content of logs/debug.log:"
-    @echo "----------------"
-    @echo ""
-    @- cat logs/debug.log
-    @echo ""
-    @echo "----------------"
-
-watch-logs n="10":
-    @tail -f -n {{n}} logs/out.log
-
-watch-logs-err n="10":
-    @tail -f -n {{n}} logs/err.log
-
-watch-logs-debug n="10":
-    @tail -f -n {{n}} logs/debug.log
-
-watch-logs-all n="10":
-    @just watch-logs {{n}} &
-    @just watch-logs-err {{n}} &
-    @just watch-logs-debug {{n}} &
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TARGETS: requirements
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+[group("system")]
 check-system:
     @echo "Operating System detected:  {{os_family()}}"
-    @echo "Python command used:        ${PYTHON_PATH}"
-    @echo "Python command for venv:    {{PYVENV}}"
-    @echo "Python path for venv:       $( {{PYVENV_ON}} && which {{PYVENV}} )"
+    @echo "cargo command:              $( cargo +stable --version )"
+    @echo "Rustc command:              $( rustc --version )"
+    @echo "cargo Zigbuild:             $( cargo-zigbuild --version )"
 
+[group("system")]
 check-system-requirements:
     @just _check-tool "cargo" "cargo"
-    @just _check-tool "cargo fmt" "cargo fmt"
+    @# just _check-tool "cargo +stable fmt -- --force" "cargo +stable fmt"
     @just _check-tool "cargo-zigbuild" "cargo-zigbuild"
-    @just _check-python-tool "{{RUST_TO_PY_BINDINGS}}" "{{RUST_TO_PY_BINDINGS}}"
