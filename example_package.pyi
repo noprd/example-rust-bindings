@@ -8,16 +8,46 @@ from __future__ import annotations
 
 from typing import Any
 from typing import Generator
-# from typing import Self
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import RootModel
 from pydantic import SkipValidation
 
+# from typing import Literal
+
 # ----------------------------------------------------------------
 # EXPORTS
 # ----------------------------------------------------------------
+
+__all__ = [
+    "greet",
+    "binary_search",
+]
+
+# ----------------------------------------------------------------
+# OBJECTS
+# ----------------------------------------------------------------
+
+def greet(
+    name: str | None,
+    /,
+) -> str:
+    """
+    Hello world method
+    """
+    ...
+
+def binary_search(
+    *,
+    data: list[str],
+    element: str,
+) -> int | None:
+    """
+    Performs a the O(log(n)) binary search algorithm to determine
+    an index of a given element in a list of data
+    """
+    ...
 
 class PsetId(BaseModel):
     """
@@ -28,6 +58,7 @@ class PsetId(BaseModel):
         extra="forbid",
         populate_by_name=True,
     )
+
     id_: int = Field(alias="id")
 
     @staticmethod
@@ -45,6 +76,7 @@ class Pset(BaseModel):
         populate_by_name=True,
         arbitrary_types_allowed=True,
     )
+
     id_: int = Field(alias="id")
     class_: str = Field(alias="class")
     value: SkipValidation[Any] = Field(alias="value")
