@@ -1,6 +1,10 @@
-name: QA [+ Build] [+ Release] (manual)
+name: Build [+ Release] (manual)
 
 on:
+  push:
+    tags:
+      - 'v*'  # trigger on creation of tags vX.Y.Z
+
   workflow_dispatch:
     inputs:
       environment:
@@ -10,22 +14,9 @@ on:
         type: environment
         default: "local"
 
-      build:
-        description: |-
-          Build binary artefacts?
-        type: boolean
-        default: false
-
-      release:
-        description: |-
-          Release binary artefacts?
-        type: boolean
-        default: false
-
       release-version:
         description: 'Release version tag'
-        required: true
-        default: "v0.0.0-test"
+        default: ""
         type: string
 
 permissions:
@@ -35,68 +26,9 @@ env:
   PYTHON_VERSION: "${{ vars.PYTHON_VERSION }}"
 
 jobs:
-  qa:
-    name: QA
-    runs-on: "ubuntu-latest"
-    environment: "${{ github.event.inputs.environment }}"
-    env:
-      CARGO_BUILD_TARGET: "x86_64-unknown-linux-gnu"
-
-    steps:
-      - uses: actions/checkout@v6.0.2
-
-      - name: Action - install justfile tool
-        uses: extractions/setup-just@v4
-        with:
-          just-version: "*"
-
-      - name: Action - install zig
-        uses: goto-bus-stop/setup-zig@v2.2.1
-        with:
-          version: "0.15.1"
-
-      - name: Action - install Python
-        uses: actions/setup-python@v6.2.0
-        with:
-          python-version: "${{ env.PYTHON_VERSION }}"
-
-      - name: Setup - add .env file
-        shell: bash
-        run: |-
-          just setup
-          touch .env
-          cat <<EOF > .env
-          MODULE_NAME="${{vars.MODULE_NAME}}"
-          PYTHON_PATH="${{ vars.PYTHON_PATH }}"
-          CARGO_BUILD_TARGET="${{ env.CARGO_BUILD_TARGET }}"
-          EOF
-
-      - name: STEP 1 - build code
-        shell: bash
-        run: |-
-          just build
-
-      - name:  STEP 2 - check linting
-        shell: bash
-        run: |-
-          just prettify
-
-      - name:  STEP 3 - run unit tests
-        shell: bash
-        run: |-
-          just tests-unit
-
-      - name:  STEP 4 - run behavioural tests
-        shell: bash
-        run: |-
-          echo "Not yet implemented"
-
   build:
     name: Build artefacts for ${{ matrix.os }}
-    if: ${{ github.event.inputs.build == 'true' }}
-    needs: [qa]
     runs-on: ${{ matrix.os }}
-    environment: "${{ github.event.inputs.environment }}"
     env:
       CARGO_BUILD_TARGET: "${{ matrix.architecture }}"
 
@@ -178,8 +110,8 @@ jobs:
 
   release:
     name: Release artefacts
-    if: ${{ github.event.inputs.release == 'true' && startsWith(github.ref, 'refs/tags/') && (github.event.inputs.release-version || github.ref_name) != '' }}
-    needs: [qa, build]
+    if: ${{ startsWith(github.ref, 'refs/tags/') && (github.event.inputs.release-version || github.ref_name) != '' }}
+    needs: [build]
     runs-on: "ubuntu-latest"
     environment: "${{ github.event.inputs.environment }}"
     env:
