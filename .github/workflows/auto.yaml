@@ -26,8 +26,7 @@ on:
 permissions:
   contents: read
 
-env:
-  PYTHON_VERSION: "${{ vars.PYTHON_VERSION }}"
+env: {}
 
 jobs:
   qa:
@@ -53,7 +52,7 @@ jobs:
       - name: Action - install Python
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: "${{ env.PYTHON_VERSION }}"
+          python-version: "${{ vars.PYTHON_VERSION }}"
 
       - name: Setup - add .env file
         shell: bash
