@@ -1,6 +1,6 @@
 [project]
 name = "example-package"
-version = "0.2.0"
+version = "0.3.0"
 description = 'Example of rust bindings for python'
 authors = [
   {name="noprd", email='noprd@users.noreply.github.com'},
@@ -39,7 +39,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "uv>=0.11.6",
+  "uv>=0.11.7",
   "ruff>=0.15.10",
   "maturin>=1.13.1",
 ]
