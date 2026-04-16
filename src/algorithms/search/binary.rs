@@ -89,14 +89,12 @@ fn search_recursive(
 
             // divide job
             let tx_ = tx.clone();
-            let tx_threads_ = tx.clone();
             let data_ = data[0..p].to_vec();
             let element_ = element.clone();
             let offset_ = offset;
             spawn(move || search_recursive(&tx_, &data_, &element_, offset_));
 
             let tx_ = tx.clone();
-            let tx_threads_ = tx.clone();
             let data_ = data[p..n].to_vec();
             let element_ = element.clone();
             let offset_ = offset + p;
